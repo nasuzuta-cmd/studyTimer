@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>勉強時間記録システム</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    button {
+      margin-right: 10px;
+      padding: 10px 15px;
+      font-size: 14px;
+    }
+    #timeDisplay {
+      font-size: 24px;
+      margin: 15px 0;
+    }
+    .error {
+      color: red;
+      margin-bottom: 10px;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 20px;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 8px;
+      text-align: center;
+    }
+    tfoot {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>勉強時間記録システム</h1>
+
+<div class="error" id="errorMessage"></div>
+
+<button id="startEnglish">英語 勉強開始</button>
+<button id="startJava">Java Silver 勉強開始</button>
+<button id="endStudy">勉強終了</button>
+
+<div id="timeDisplay">00:00:00</div>
+
+<h2>英語</h2>
+<table id="englishTable">
+  <thead>
+    <tr>
+      <th>日付</th>
+      <th>開始時間</th>
+      <th>終了時間</th>
+      <th>勉強時間</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+  <tfoot>
+    <tr>
+      <td colspan="3">合計</td>
+      <td id="englishTotal">00:00:00</td>
+    </tr>
+  </tfoot>
+</table>
+
+<h2>Java Silver</h2>
+<table id="javaTable">
+  <thead>
+    <tr>
+      <th>日付</th>
+      <th>開始時間</th>
+      <th>終了時間</th>
+      <th>勉強時間</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+  <tfoot>
+    <tr>
+      <td colspan="3">合計</td>
+      <td id="javaTotal">00:00:00</td>
+    </tr>
+  </tfoot>
+</table>
+
+<script>
+  let currentStudy = null;
+  let startTime = null;
+  let timerId = null;
+  let elapsedSeconds = 0;
+
+  let englishTotalSeconds = 0;
+  let javaTotalSeconds = 0;
+
+  const timeDisplay = document.getElementById("timeDisplay");
+  const errorMessage = document.getElementById("errorMessage");
+
+  function formatTime(seconds) {
+    const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
+    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+    const s = String(seconds % 60).padStart(2, "0");
+    return `${h}:${m}:${s}`;
+  }
+
+  function formatDate(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}/${m}/${d}`;
+  }
+
+  function formatClock(date) {
+    return date.toLocaleTimeString();
+  }
+
+  function showError(message) {
+    errorMessage.textContent = message;
+  }
+
+  function clearError() {
+    errorMessage.textContent = "";
+  }
+
+  function startStudy(type) {
+    if (currentStudy !== null) {
+      showError("すでに勉強中です。終了してから開始してください。");
+      return;
+    }
+
+    clearError();
+    currentStudy = type;
+    startTime = new Date();
+    elapsedSeconds = 0;
+    timeDisplay.textContent = "00:00:00";
+
+    timerId = setInterval(() => {
+      elapsedSeconds++;
+      timeDisplay.textContent = formatTime(elapsedSeconds);
+    }, 1000);
+  }
+
+  function endStudy() {
+    if (currentStudy === null) {
+      showError("勉強が開始されていません。");
+      return;
+    }
+
+    clearError();
+    clearInterval(timerId);
+
+    const endTime = new Date();
+    const studySeconds = elapsedSeconds;
+
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${formatDate(startTime)}</td>
+      <td>${formatClock(startTime)}</td>
+      <td>${formatClock(endTime)}</td>
+      <td>${formatTime(studySeconds)}</td>
+    `;
+
+    if (currentStudy === "english") {
+      document.querySelector("#englishTable tbody").appendChild(row);
+      englishTotalSeconds += studySeconds;
+      document.getElementById("englishTotal").textContent =
+        formatTime(englishTotalSeconds);
+    } else {
+      document.querySelector("#javaTable tbody").appendChild(row);
+      javaTotalSeconds += studySeconds;
+      document.getElementById("javaTotal").textContent =
+        formatTime(javaTotalSeconds);
+    }
+
+    currentStudy = null;
+    startTime = null;
+    timeDisplay.textContent = "00:00:00";
+  }
+
+  document.getElementById("startEnglish").addEventListener("click", () => {
+    startStudy("english");
+  });
+
+  document.getElementById("startJava").addEventListener("click", () => {
+    startStudy("java");
+  });
+
+  document.getElementById("endStudy").addEventListener("click", endStudy);
+</script>
+
+</body>
+</html>
